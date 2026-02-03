@@ -13,6 +13,7 @@ GUILD_ID = os.getenv('DISCORD_GUILD_ID')
 # Define the intents your bot needs
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 #MY_GUILD = discord.Object(id=0)
 

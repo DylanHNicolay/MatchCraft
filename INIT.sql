@@ -9,6 +9,7 @@ CREATE TABLE game_configuration (
     role_count INT
 );
 
+
 CREATE TABLE role_information (
     game_name VARCHAR(50),
     role_name VARCHAR(50),

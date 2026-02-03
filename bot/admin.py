@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.db import db
-from utils.Helpers import EmbedView
+from views.helpers import EmbedView
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -61,13 +61,13 @@ class Admin(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for the owner"),ephemeral=True)
 
     #display a message containing all the whitelisted roles for pug administration
-    @app_commands.command(name="getadminlist",description="ADMINS ONLY: Displays all current Admin roles")
-    async def getadminlist(self,interaction: discord.Interaction):
+    @app_commands.command(name="getadminroles",description="ADMINS ONLY: Displays all current Admin roles")
+    async def getadminroles(self,interaction: discord.Interaction):
         if(self.verifyAdmin(interaction.user)):
-            outMessageDatabase="The following roles have admin perms in the database:\n"
+            outMessage="The following roles have admin perms:\n"
             for x in self.adminWhitelistRole:
-                outMessageDatabase += (interaction.guild.get_role(x).name + "\n")
-            await interaction.response.send_message(view=EmbedView(myText=outMessageDatabase),ephemeral=True)
+                outMessage += (interaction.guild.get_role(x).name + "\n")
+            await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
         else:
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
@@ -124,6 +124,20 @@ class Admin(commands.Cog):
         
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
             
+    
+    @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
+    async def getadmins(self,interaction: discord.Interaction):
+        if (self.verifyAdmin(interaction.user)):
+            outMessage="The following users have admin perms:\n"
+            for user in interaction.guild.members:
+                for role in user.roles:
+                    if role.id in self.adminWhitelistRole:
+                        outMessage += (user.mention + "\n")
+                        break
+            await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
+        else:
+            await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Admin(bot))

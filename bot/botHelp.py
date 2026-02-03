@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.Helpers import EmbedView
+from views.helpers import EmbedView
 
 
 class botHelp(commands.Cog):
