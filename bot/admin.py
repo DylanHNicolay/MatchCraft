@@ -154,6 +154,19 @@ class Admin(commands.Cog):
 
         await db.close()
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
+    
+    #TODO: Change the create_game function to include channel id so it is easy to remove
+    #TODO: My cuurent code checks for a channel id that is not included when the game is created. It will not work for now. 
+    async def endgame(self, interaction: discord.Interaction):
+        if not self.verifyAdmin(interaction.user):
+            await interaction.response.send_message(view=EmbedView(myText="This comnand is reserved for administrators"),ephemeral=True)
+            return
+        try:
+            await db.connect()
+            await db.execute("DELETE FROM game_configuration WHERE channelid = $1;",interaction.channel_id)
+            await db.close()
+        except:
+            await interaction.response.send_message(view=EmbedView(myText="Unable to delete game from database"),ephemeral=True)
  
     @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
     async def getadmins(self,interaction: discord.Interaction):
