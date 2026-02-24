@@ -3,7 +3,8 @@ CREATE TABLE administrative_roles (
 );
 
 CREATE TABLE game_configuration (
-    game_name VARCHAR(50) PRIMARY KEY,
+    channel_id BIGINT PRIMARY KEY,
+    game_name VARCHAR(50),
     players_per_team INT,
     team_count INT,
     role_count INT

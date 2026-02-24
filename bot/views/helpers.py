@@ -72,3 +72,18 @@ class MyActionRow(ui.ActionRow):
             await interaction.response.send_message(view=EmbedPugView(myQueueName=self.queue.queueDict[channel.id]["game"],myText=output,myQueue=self.queue),ephemeral=failure)
         else:
             await interaction.response.send_message(view=EmbedView(myText="That queue is no longer active."),ephemeral=True)
+
+# NEW DROP DOWN MENU SYSTEM: NEEDS TESTING
+class Select(ui.Select):
+    def __init__(self, *, text: str, choose: list):
+        self.retval = None
+        super().__init__(placeholder=text,max_values=1,min_values=1,options=choose)
+    async def callback(self, interaction: discord.Interaction):
+        self.retval = self.values[0]
+        interaction.response.send_message(view=EmbedView(myText="I received this!"))
+
+class DropdownView(ui.View):
+    def __init__(self, *, placeholder_text: str, choices: list, timeout = 180):
+        super().__init__(timeout=timeout)
+        self.select = Select(text=placeholder_text,choose=choices)
+        self.add_item(self.select)

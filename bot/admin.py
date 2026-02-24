@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.db import db
-from views.helpers import EmbedView
+from views.helpers import EmbedView, DropdownView
 
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -89,7 +89,8 @@ class Admin(commands.Cog):
         
         try:
             await db.connect()
-            await db.execute("INSERT INTO game_configuration (game_name, players_per_team, team_count, role_count) VALUES ($1, $2, $3, $4);", game_name, players_per_team, teams, num_roles if role_based_matchmaking else 1)
+            # NOW USES CHANNEL ID AS MAIN KEY
+            await db.execute("INSERT INTO game_configuration (channel_id, game_name, players_per_team, team_count, role_count) VALUES ($1, $2, $3, $4, $5);", interaction.channel_id, game_name, players_per_team, teams, num_roles if role_based_matchmaking else 1)
             await db.close()
         except:
             await interaction.response.send_message(view=EmbedView(myText="Unable to add game to database"),ephemeral=True)
@@ -155,18 +156,29 @@ class Admin(commands.Cog):
         await db.close()
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
     
-    #TODO: Change the create_game function to include channel id so it is easy to remove
-    #TODO: My cuurent code checks for a channel id that is not included when the game is created. It will not work for now. 
-    async def endgame(self, interaction: discord.Interaction):
+    # THIS COMMAND MOST LIKELY DOES NOT WORK, but I cannot test it. The idea is here
+    @app_commands.command(name="stopgame", description="ADMINS ONLY: Stops a given game")
+    async def stopgame(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
-            await interaction.response.send_message(view=EmbedView(myText="This comnand is reserved for administrators"),ephemeral=True)
+            await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
             return
         try:
             await db.connect()
-            await db.execute("DELETE FROM game_configuration WHERE channelid = $1;",interaction.channel_id)
+            games = await db.execute("SELECT game_name FROM game_configuration WHERE channel_id = $1;",interaction.channel_id)
             await db.close()
         except:
             await interaction.response.send_message(view=EmbedView(myText="Unable to delete game from database"),ephemeral=True)
+            return
+        if len(games) == 0:
+            await interaction.response.send_message(view=EmbedView(myText="No games found in this channel."),ephemeral=True)
+        view = DropdownView(placeholder_text="Please select the game to delete",choices=games)
+        await interaction.response.send_message(view=view,ephemeral=True)
+        await view.wait()
+        if view.select.retval == None:
+            return
+        db.connect()
+        db.execute("DELETE FROM game_configuration WHERE game_name = $1;",view.select.retval)
+        db.close()
  
     @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
     async def getadmins(self,interaction: discord.Interaction):
