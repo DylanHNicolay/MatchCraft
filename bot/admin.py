@@ -75,7 +75,7 @@ class Admin(commands.Cog):
     @app_commands.command(name="creategame", description="Creates a new game")
     async def creategame(self, interaction: discord.Interaction, game_name : str, teams : int, players_per_team : int, role_based_matchmaking : bool, admin_role : discord.Role, access_role : discord.Role, num_roles : int | None):
         if not self.verifyAdmin(interaction.user):
-            await interaction.response.send_message(view=EmbedView(myText="This comnand is reserved for administrators"),ephemeral=True)
+            await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
             return
         
         if players_per_team <= 0 or teams < 2:
@@ -154,6 +154,22 @@ class Admin(commands.Cog):
 
         await db.close()
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
+    
+    @app_commands.command(name="removegame", description="Removes a game from the database")
+    async def removegame(self, interaction: discord.Interaction, game_name : str):
+        if not self.verifyAdmin(interaction.user):
+            await interaction.response.send_message(view=EmbedView(myText="This comnand is reserved for administrators"),ephemeral=True)
+            return
+        
+        try:
+            await db.connect()
+            await db.execute("DELETE FROM game_configuration WHERE game_name = $1;", game_name) # Cascade will take care of the rest here
+            await db.close()
+        except:
+            await interaction.response.send_message(view=EmbedView(myText="Couldn't connect to DB for game removal."),ephemeral=True)
+            return
+        
+        await interaction.response.send_message(view=EmbedView(myText=f"Removed \"{game_name}\" from the database."),ephemeral=True)
  
     @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
     async def getadmins(self,interaction: discord.Interaction):
