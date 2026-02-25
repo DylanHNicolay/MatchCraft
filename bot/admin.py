@@ -154,6 +154,20 @@ class Admin(commands.Cog):
 
         await db.close()
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
+    
+    @app_commands.command(name="removegame", description="Removes a game from the database")
+    async def removegame(self, interaction: discord.Interaction, game_name : str):
+        if not self.verifyAdmin(interaction.user):
+            await interaction.response.send_message(view=EmbedView(myText="This comnand is reserved for administrators"),ephemeral=True)
+            return
+        
+        try:
+            await db.connect()
+            await db.execute("DELETE FROM game_configuration WHERE game_name = $1;", game_name)
+            await db.close()
+        except:
+            await interaction.response.send_message(view=EmbedView(myText="Couldn't connect to DB for game removal."),ephemeral=True)
+            return
  
     @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
     async def getadmins(self,interaction: discord.Interaction):
