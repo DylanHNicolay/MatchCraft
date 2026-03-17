@@ -5,6 +5,9 @@ from utils.db import db
 from views.helpers import EmbedView#, DropdownView
 
 class Admin(commands.Cog):
+    group = app_commands.Group(name="admin",description="For pug admin use")
+    group_game = app_commands.Group(name="config-game",description="Related to games")
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.adminWhitelistRole=[]
@@ -25,7 +28,7 @@ class Admin(commands.Cog):
         return False
 
     #Add the specified role to the pug admin whitelist
-    @app_commands.command(name="addadminrole",description="OWNER ONLY: Adds a role into the list of Admin Roles")
+    @group.command(name="add",description="OWNER ONLY: Adds a role into the list of Admin Roles")
     async def addadminrole(self, interaction: discord.Interaction, role: discord.Role):
         if interaction.user.id == interaction.guild.owner_id:
             outMessage=role.name + " already has pug admin perms"
@@ -43,7 +46,7 @@ class Admin(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for the owner"),ephemeral=True)
             
     #Remove the specified role from the pug admin whitelist
-    @app_commands.command(name="removeadminrole",description="OWNER ONLY: Removes a role from the list of Admin Roles")
+    @group.command(name="remove",description="OWNER ONLY: Removes a role from the list of Admin Roles")
     async def removeadminrole(self, interaction: discord.Interaction, role: discord.Role):
         if interaction.user.id == interaction.guild.owner_id:
             outMessage=role.name + " does not have pug admin perms"
@@ -61,7 +64,7 @@ class Admin(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for the owner"),ephemeral=True)
 
     #display a message containing all the whitelisted roles for pug administration
-    @app_commands.command(name="getadminroles",description="ADMINS ONLY: Displays all current Admin roles")
+    @group.command(name="list_roles",description="ADMINS ONLY: Displays all current Admin roles")
     async def getadminroles(self,interaction: discord.Interaction):
         if(self.verifyAdmin(interaction.user)):
             outMessage="The following roles have admin perms:\n"
@@ -70,9 +73,22 @@ class Admin(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
         else:
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
+    
+    @group.command(name="list",description="ADMINS ONLY: Displays all current Admin users")
+    async def getadmins(self,interaction: discord.Interaction):
+        if (self.verifyAdmin(interaction.user)):
+            outMessage="The following users have admin perms:\n"
+            for user in interaction.guild.members:
+                for role in user.roles:
+                    if role.id in self.adminWhitelistRole:
+                        outMessage += (user.mention + "\n")
+                        break
+            await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
+        else:
+            await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
     # TODO: Move this elsewhere
-    @app_commands.command(name="creategame", description="Creates a new game")
+    @group_game.command(name="create", description="Creates a new game")
     async def creategame(self, interaction: discord.Interaction, game_name : str, teams : int, players_per_team : int, role_based_matchmaking : bool, admin_role : discord.Role, access_role : discord.Role, num_roles : int | None):
         if not self.verifyAdmin(interaction.user):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
@@ -157,7 +173,7 @@ class Admin(commands.Cog):
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
     
     # This command now works as intended. Nice!
-    @app_commands.command(name="deletegames", description="ADMINS ONLY: Stops a given game")
+    @group_game.command(name="delete", description="ADMINS ONLY: Stops given games in dropdown")
     async def deletegames(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
@@ -173,7 +189,6 @@ class Admin(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="No games found in this channel."),ephemeral=True)
             return
         
-        interacted = False
         class Dropdown(discord.ui.Select):
             def __init__(self):
                 options = []
@@ -181,8 +196,6 @@ class Admin(commands.Cog):
                     options.append(discord.SelectOption(label=game['game_name']))
                 super().__init__(placeholder="Choose a game to delete!",min_values=1,max_values=1,options=options)
             async def callback(self, interaction: discord.Interaction):
-                global interacted
-                interacted = True
                 await db.connect()
                 await db.execute("DELETE FROM game_configuration WHERE game_name = $1;",self.values[0])
                 await db.close()
@@ -193,22 +206,7 @@ class Admin(commands.Cog):
                 super().__init__(timeout=180)
                 self.add_item(Dropdown())
 
-        await interaction.response.send_message(view=DropdownView(),ephemeral=True)
+        await interaction.response.send_message(view=DropdownView(),ephemeral=True,delete_after=60)
         
- 
-    @app_commands.command(name="getadmins",description="ADMINS ONLY: Displays all current Admin users")
-    async def getadmins(self,interaction: discord.Interaction):
-        if (self.verifyAdmin(interaction.user)):
-            outMessage="The following users have admin perms:\n"
-            for user in interaction.guild.members:
-                for role in user.roles:
-                    if role.id in self.adminWhitelistRole:
-                        outMessage += (user.mention + "\n")
-                        break
-            await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
-        else:
-            await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
-
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Admin(bot))

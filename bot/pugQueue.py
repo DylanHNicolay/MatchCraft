@@ -5,6 +5,8 @@ from views.helpers import EmbedView, EmbedPugView
 
 
 class Queue(commands.Cog):
+    group = app_commands.Group(name="queue",description="Related to pug queues")
+
     def __init__(self,bot) -> None:
         self.bot=bot
         self.queueDict={}
@@ -30,8 +32,7 @@ class Queue(commands.Cog):
         return self.adminCog.verifyAdmin(user)
         
     #Starts a queue if one does not exist in the current channel
-    @app_commands.command(name="startqueue",description="ADMIN ONLY: Starts a queue if one does not exist in the current channel")
-    @app_commands.describe(game='The game the queue is for', maxplayers='The number of players needed for a match')
+    @group.command(name="start",description="ADMIN ONLY: Starts a queue if one does not exist in the current channel")
     async def startqueue(self, interaction: discord.Interaction, game: str, maxplayers: int):
         if(self.verifyAdmin(interaction.user)):
             channel=interaction.channel
@@ -58,7 +59,7 @@ class Queue(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
     #Stops the queue in the current channel if one exists
-    @app_commands.command(name="stopqueue",description="ADMIN ONLY: Stops the queue in the current channel if one exists")
+    @group.command(name="end",description="ADMIN ONLY: Ends the queue in the current channel if one exists")
     async def stopqueue(self, interaction: discord.Interaction):
         if(self.verifyAdmin(interaction.user)):
             channel=interaction.channel
@@ -76,7 +77,7 @@ class Queue(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
     
     #Add a person to the waiting list
-    @app_commands.command(name="add",description="ADMIN ONLY: Adds the specified User (not already in queue) to the current queue")
+    @group.command(name="add",description="ADMIN ONLY: Adds the specified User (not already in queue) to the current queue")
     async def add(self, interaction: discord.Interaction, user: discord.User):
         if(self.verifyAdmin(interaction.user)):
             channel=interaction.channel
@@ -101,12 +102,12 @@ class Queue(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
     #Remove a person from the waiting list
-    @app_commands.command(name="remove",description="ADMIN ONLY: Removes the specified User (in the queue) from the current queue")
+    @group.command(name="kick",description="ADMIN ONLY: Kicks the specified User (in the queue) from the current queue")
     async def remove(self, interaction: discord.Interaction, user: discord.User):
         if(self.verifyAdmin(interaction.user)):
             channel=interaction.channel
             name=user.name
-            output="cannot remove player from non-queue channel"
+            output="cannot kick player from non-queue channel"
             failure = False
             if channel.id in self.queueDict.keys():
                 if(name in self.queueDict[channel.id]["player_queue"]):
@@ -148,7 +149,7 @@ class Queue(commands.Cog):
         #outcome reporting
      
     #adds the player to the queue 
-    @app_commands.command(name="join",description="Join the queue in the current channel")
+    @group.command(name="join",description="Join the queue in the current channel")
     async def join(self, interaction: discord.Interaction):
         channel=interaction.channel
         name=interaction.user.name
@@ -170,7 +171,7 @@ class Queue(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="There is no queue in this channel"),ephemeral=True)
 
     #removes the player from the queue
-    @app_commands.command(name="leave",description="Leave the queue in the current channel")
+    @group.command(name="leave",description="Leave the queue in the current channel")
     async def leave(self, interaction: discord.Interaction):
         channel=interaction.channel
         name=interaction.user.name
@@ -188,7 +189,7 @@ class Queue(commands.Cog):
             await interaction.response.send_message(view=EmbedView(myText="There is no queue in this channel"),ephemeral=True)
 
     #displays how many players are in the queue
-    @app_commands.command(name="queuestatus",description="Displays the number of players currently in the queue")
+    @group.command(name="status",description="Displays the number of players currently in the queue")
     async def queuestatus(self, interaction: discord.Interaction):
         channel=interaction.channel
         output="cannot check queue in non-queue channel"
