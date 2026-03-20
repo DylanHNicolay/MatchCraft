@@ -10,15 +10,26 @@ services:
       - app-net
 
   db:
-    image: postgres:15-alpine
-    env_file:
-      - .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
+    build:
+      context: .
+      dockerfile: Database/Dockerfile
+    env_file: .env
+    restart: unless-stopped
     networks:
       - app-net
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - db
+  #   restart: always
+  #   networks:
+  #     - app-net
 
 volumes:
   postgres_data:
