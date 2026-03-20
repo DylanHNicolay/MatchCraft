@@ -12,8 +12,14 @@ class botHelp(commands.Cog):
     async def help(self, interaction: discord.Interaction):
         message = "Bot Command List:\n\n"
         try:
-            for command in self.bot.tree.get_commands():
-                message += ("/" + command.name + " - " + command.description + "\n")
+            for cog in self.bot.cogs.values():
+                commands = cog.get_app_commands()
+                for command in commands:
+                    if (isinstance(command,app_commands.Group)):
+                        for actual_command in command.walk_commands():
+                            message += (f"/{command.name} {actual_command.name} - {actual_command.description}\n")
+                    else:
+                        message += (f"/{command.name} - {command.description}\n")
             await interaction.response.send_message(view=EmbedView(myText=message),ephemeral=True)
         except:
             await interaction.response.send_message(view=EmbedView(myText="Command failed... try again later."),ephemeral=True)
