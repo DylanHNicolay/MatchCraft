@@ -11,6 +11,9 @@
       "moby": false
     }
   },
+  "containerEnv": {
+    "NODE_EXTRA_CA_CERTS": "${localEnv:NODE_EXTRA_CA_CERTS}"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
