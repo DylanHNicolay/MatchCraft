@@ -171,10 +171,6 @@ class Queue(commands.Cog):
 
         invite = await vc.create_invite()
 
-        msg = await cur_channel.fetch_message(self.queueDict[cur_channel.id]["msg_id"])
-        await msg.delete()
-        self.queueDict[cur_channel.id]["msg_id"] = None
-
         await interaction.response.send_message(view=EmbedView(myText="Start success!"),ephemeral=True)
 
         for player in self.queueDict[cur_channel.id]["players"]:
