@@ -28,6 +28,7 @@ class MyClient(commands.Bot):
         #await self.add_cog(pugQueue.Queue(self))   
         #await self.add_cog(pugQueue.AdminManagement(self))  
         await self.load_extension("admin")
+        await self.load_extension("game")
         await self.load_extension("pugQueue")
         await self.load_extension("botHelp")
         if GUILD_ID and GUILD_ID.isdigit():

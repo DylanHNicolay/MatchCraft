@@ -7,7 +7,7 @@ from views.helpers import EmbedView
 class Admin(commands.Cog):
     group = app_commands.Group(name="admin",description="For pug admin use")
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot) -> None:
         self.bot = bot
         self.adminWhitelistRole=[]
 
@@ -86,5 +86,5 @@ class Admin(commands.Cog):
                     break
         await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Admin(bot))

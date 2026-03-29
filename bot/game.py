@@ -7,7 +7,7 @@ from views.helpers import EmbedView
 class Game(commands.Cog):
     group = app_commands.Group(name="game",description="Related to games")
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot) -> None:
         self.bot = bot
         self.adminCog=self.bot.get_cog("Admin")
 
@@ -34,6 +34,7 @@ class Game(commands.Cog):
             return await interaction.response.send_message(view=EmbedView(myText="Unable to add game to database"),ephemeral=True)
         
         # Create the channels
+        """
         category_override = { # Ensures that the access role can see the category
             interaction.guild.default_role: discord.PermissionOverwrite(
                 view_channel=False, 
@@ -65,7 +66,7 @@ class Game(commands.Cog):
         }
         announcements_channel = await interaction.guild.create_text_channel(name = f"{game_name}-annnouncements", overwrites = announcements_override, category=category, reason=None)
         general_channel = await interaction.guild.create_text_channel(name = f"{game_name}-general", category=category, reason=None)
-
+        """ 
         if not role_based_matchmaking:
             return await interaction.response.send_message(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
         
@@ -123,5 +124,5 @@ class Game(commands.Cog):
 
         await interaction.response.send_message(view=DropdownView(),ephemeral=True,delete_after=60)
         
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Game(bot))
