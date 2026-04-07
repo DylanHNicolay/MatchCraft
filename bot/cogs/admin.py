@@ -70,7 +70,8 @@ class Admin(commands.Cog):
 
         outMessage="The following roles have admin perms:\n"
         for x in self.adminWhitelistRole:
-            outMessage += (interaction.guild.get_role(x).name + "\n")
+            if (role := interaction.guild.get_role(x) != None):
+                outMessage += (role.name + "\n")
         await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
 
     @group.command(name="list",description="ADMINS ONLY: Displays all current Admin users")

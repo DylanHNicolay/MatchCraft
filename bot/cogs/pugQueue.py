@@ -9,6 +9,7 @@ class Queue(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
         self.adminCog = bot.get_cog("Admin")
+        self.gameCog = bot.get_cog("Game")
         self.queueDict = {}
 
     # returns a string of all the users in current channel's queue
@@ -44,7 +45,7 @@ class Queue(commands.Cog):
             return await interaction.response.send_message(view=EmbedView(myText="The queue is already full"),ephemeral=True)
         
         if self.queueDict[cur_channel.id]["start"]:
-            return await interaction.response.send_message(view=EmbedView(myText="The queue game has already started"),ephemeral=True)
+            return await interaction.response.send_message(view=EmbedView(myText="The queue has already started"),ephemeral=True)
         
         self.queueDict[cur_channel.id]["players"].append(user) if add else self.queueDict[cur_channel.id]["players"].remove(user)
         
@@ -61,18 +62,31 @@ class Queue(commands.Cog):
     # ADMIN ONLY COMMANDS
 
     # creates queue
-    @group.command(name="create",description="ADMIN ONLY: Starts a queue if one does not exist in the current channel")
-    async def startqueue(self, interaction: discord.Interaction, game: str, maxplayers: int):
+    @group.command(name="create",description="ADMIN ONLY: Starts a queue if one does not exist in the current game channel")
+    async def startqueue(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user): # admin check
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
+        
+        record = await self.gameCog.getGame(interaction.channel.category.id)
+        if len(record) == 0:
+            return await interaction.response.send_message(view=EmbedView(myText="This channel is not a game channel"),ephemeral=True)
 
         cur_channel = interaction.channel
         if cur_channel.id in self.queueDict.keys(): # make sure the channel does not have queue
             return await interaction.response.send_message(view=EmbedView(myText="A queue already exists in this channel"),ephemeral=True)
         
+        game_name = ""
+        maxplayers = 0
+
+        for game in record:
+            game_name = game['game_name']
+            maxplayers = int(game['players_per_team']) * int(game['team_count'])
+            break
+
+        
         # add the queue to the dictionary
         self.queueDict[cur_channel.id] = {
-            "name": game,
+            "name": game_name,
             "max": maxplayers,
             "players": [],
             "msg_id": None,
@@ -80,7 +94,7 @@ class Queue(commands.Cog):
             "start": False
         }
 
-        msg = await cur_channel.send(view=EmbedPugView(myQueueName=game,myText=self.getmsg(cur_channel),myQueue=self))
+        msg = await cur_channel.send(view=EmbedPugView(myQueueName=game_name,myText=self.getmsg(cur_channel),myQueue=self))
         self.queueDict[cur_channel.id]["msg_id"] = msg.id
 
         await interaction.response.send_message(view=EmbedView(myText="Game creation success!"),ephemeral=True)
@@ -93,6 +107,9 @@ class Queue(commands.Cog):
         cur_channel = interaction.channel
         if cur_channel.id not in self.queueDict.keys(): # make sure the channel does not have queue
             return await interaction.response.send_message(view=EmbedView(myText="A queue does not exist in this channel"),ephemeral=True)
+        
+        if self.queueDict[cur_channel.id]["start"]:
+            return await interaction.response.send_message(view=EmbedView(myText="The queue has already started"),ephemeral=True)
         
         msg = await cur_channel.fetch_message(self.queueDict[cur_channel.id]["msg_id"])
         await msg.delete()
@@ -142,7 +159,7 @@ class Queue(commands.Cog):
     
     # TODO: start the game
     @group.command(name="start",description="ADMIN ONLY: Immediately starts the game")
-    async def start(self, interaction: discord.Interaction, category: discord.CategoryChannel):
+    async def start(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
         
@@ -161,7 +178,7 @@ class Queue(commands.Cog):
                 speak = True
             )
         
-        vc = await interaction.guild.create_voice_channel(name=self.queueDict[cur_channel.id]["name"],overwrites=overwrite,category=category)
+        vc = await interaction.guild.create_voice_channel(name=self.queueDict[cur_channel.id]["name"],overwrites=overwrite,category=interaction.channel.category)
         self.queueDict[cur_channel.id]["vc"] = vc
         self.queueDict[cur_channel.id]["start"] = True
 
@@ -171,16 +188,13 @@ class Queue(commands.Cog):
 
         invite = await vc.create_invite()
 
-        await interaction.response.send_message(view=EmbedView(myText="Start success!"),ephemeral=True)
+        await interaction.response.defer()
 
         for player in self.queueDict[cur_channel.id]["players"]:
             dm = await player.create_dm()
             await dm.send(content=invite.url)
 
-        """
-        1. Create a new VC channel somewhere in the server
-        2. Send a DM to every user in the queue for this channel with a link to the VC
-        """    
+        await interaction.followup.send(view=EmbedView(myText="Start success!"),ephemeral=True)  
 
     # Below are commands which anyone can use
 
