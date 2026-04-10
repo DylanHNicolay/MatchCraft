@@ -97,7 +97,7 @@ class Queue(commands.Cog):
         msg = await cur_channel.send(view=EmbedPugView(myQueueName=game_name,myText=self.getmsg(cur_channel),myQueue=self))
         self.queueDict[cur_channel.id]["msg_id"] = msg.id
 
-        await interaction.response.send_message(view=EmbedView(myText="Game creation success!"),ephemeral=True)
+        await interaction.response.send_message(view=EmbedView(myText="Queue creation success!"),ephemeral=True)
 
     @group.command(name="resend",description="ADMIN ONLY: Re-sends the queue message if one exists in the channel")
     async def sendqueue(self, interaction: discord.Interaction):

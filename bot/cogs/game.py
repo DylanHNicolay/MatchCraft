@@ -20,7 +20,7 @@ class Game(commands.Cog):
         await db.close()
         return retval
 
-    @group.command(name="create", description="Creates a new game")
+    @group.command(name="create", description="ADMIN ONLY: Creates a new game")
     async def creategame(self, interaction: discord.Interaction, game_name : str, teams : int, players_per_team : int, role_based_matchmaking : bool, admin_role : discord.Role, access_role : discord.Role, num_roles : int | None):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
@@ -108,7 +108,7 @@ class Game(commands.Cog):
         await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
     
     # This command now works as intended. Nice!
-    @group.command(name="delete", description="ADMINS ONLY: Stops given games in dropdown. The dropdown lasts for 60 seconds")
+    @group.command(name="delete", description="ADMIN ONLY: Stops given games in dropdown. The dropdown lasts for 60 seconds")
     async def deletegames(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
