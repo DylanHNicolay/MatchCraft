@@ -5,7 +5,7 @@ from views.helpers import EmbedView
 
 
 class botHelp(commands.Cog):
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.command(name="help",description="Displays all commands of the bot")

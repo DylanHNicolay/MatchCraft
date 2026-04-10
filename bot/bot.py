@@ -18,12 +18,12 @@ intents.members = True
 #MY_GUILD = discord.Object(id=0)
 
 class MyClient(commands.Bot):
-    def __init__(self, *, intents: discord.Intents):
+    def __init__(self, *, intents: discord.Intents) -> None:
         super().__init__(command_prefix='!', intents=intents)
         #self.tree = app_commands.CommandTree(self)
 
 
-    async def setup_hook(self):
+    async def setup_hook(self) -> None:
         #self.tree.clear_commands(guild=None)
         #await self.add_cog(pugQueue.Queue(self))   
         #await self.add_cog(pugQueue.AdminManagement(self))  
@@ -38,7 +38,7 @@ class MyClient(commands.Bot):
         else:
             await self.tree.sync()
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         print(f'Logged in as {self.user} (ID: {self.user.id})') # type: ignore
         print('------')
 
@@ -47,7 +47,7 @@ class MyClient(commands.Bot):
 
 client = MyClient(intents=intents)
 
-def main():
+def main() -> None:
     client.run(TOKEN) # type: ignore
 
 if __name__ == "__main__":

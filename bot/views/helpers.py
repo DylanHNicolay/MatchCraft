@@ -4,7 +4,7 @@ from discord.ext import commands
 
 # Forward declaration of Queue class
 class Queue(commands.Cog):
-    def __init__(self,bot):
+    def __init__(self,bot) -> None:
         self.bot = bot
 
 #standard embed view for sending messages with the bot

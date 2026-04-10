@@ -6,19 +6,19 @@ from views.helpers import EmbedView, EmbedPugView
 class Queue(commands.Cog):
     group = app_commands.Group(name="queue",description="Related to pug queues")
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.adminCog = bot.get_cog("Admin")
         self.gameCog = bot.get_cog("Game")
         self.queueDict = {}
 
     # returns a string of all the users in current channel's queue
-    def getmsg(self, channel: discord.TextChannel):
+    def getmsg(self, channel: discord.TextChannel) -> str:
         if len(self.queueDict[channel.id]["players"]) == 0:
             return "\nNo one is in this queue\n"
         
         msg = "The following users are in the queue:\n"
-        for x in range (0,len(self.queueDict[channel.id]["players"])):
+        for x in range(len(self.queueDict[channel.id]["players"])):
             msg += (self.queueDict[channel.id]["players"][x]).mention
             if(x != len(self.queueDict[channel.id]["players"])-1):
                 msg += "\n"
@@ -27,13 +27,13 @@ class Queue(commands.Cog):
         return (msg+("\n["+str(len(self.queueDict[channel.id]["players"]))+"/"+str(self.queueDict[channel.id]["max"])+"]"))
     
     # edits the queue message to reflect changes
-    async def editMessage(self, channel: discord.TextChannel):
+    async def editMessage(self, channel: discord.TextChannel) -> None:
         if channel.id in self.queueDict.keys():
             msg = await channel.fetch_message(self.queueDict[channel.id]["msg_id"])
             await msg.edit(view=EmbedPugView(myQueueName=self.queueDict[channel.id]["name"],myText=self.getmsg(channel),myQueue=self))
 
     # adds/removes the player from the queue if conditions are met (removes duplicate code)
-    async def accessDict(self, interaction: discord.Interaction, user: discord.User, add):
+    async def accessDict(self, interaction: discord.Interaction, user: discord.User, add) -> None:
         cur_channel = interaction.channel
         if cur_channel.id not in self.queueDict.keys():
             return await interaction.response.send_message(view=EmbedView(myText="There is no queue in this channel"),ephemeral=True)
@@ -55,10 +55,9 @@ class Queue(commands.Cog):
 
 
     # we ask the admin cog to verify admins for us
-    def verifyAdmin(self, user: discord.User):
+    def verifyAdmin(self, user: discord.User) -> bool:
         return self.adminCog.verifyAdmin(user)
     
-
     # ADMIN ONLY COMMANDS
 
     # creates queue

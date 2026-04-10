@@ -7,20 +7,20 @@ from views.helpers import EmbedView
 class Admin(commands.Cog):
     group = app_commands.Group(name="admin",description="For pug admin use")
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.adminWhitelistRole=[]
 
     #async database setup
     #populate admin whitelist and queue dictionary with values from the database
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         await db.connect()
         adminRoles = await db.execute("SELECT role_id FROM administrative_roles;")
         await db.close()
         for role in adminRoles:
             self.adminWhitelistRole.append(role['role_id']) 
 
-    def verifyAdmin(self, user: discord.User):
+    def verifyAdmin(self, user: discord.User) -> bool:
         for role in user.roles:
             if role.id in self.adminWhitelistRole:
                 return True
@@ -64,7 +64,7 @@ class Admin(commands.Cog):
 
     #display a message containing all the whitelisted roles for pug administration
     @group.command(name="list_roles",description="ADMINS ONLY: Displays all current Admin roles")
-    async def getadminroles(self,interaction: discord.Interaction):
+    async def getadminroles(self, interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
@@ -74,7 +74,7 @@ class Admin(commands.Cog):
                 outMessage += (role.name + "\n")
         await interaction.response.send_message(view=EmbedView(myText=outMessage),ephemeral=True)
 
-    @group.command(name="list",description="ADMIN ONLY: Displays all current Admin users")
+    @group.command(name="list", description="ADMIN ONLY: Displays all current Admin users")
     async def getadmins(self,interaction: discord.Interaction):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
