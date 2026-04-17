@@ -33,7 +33,7 @@ class Queue(commands.Cog):
             await msg.edit(view=EmbedPugView(myQueueName=self.queueDict[channel.id]["name"],myText=self.getmsg(channel),myQueue=self))
 
     # adds/removes the player from the queue if conditions are met (removes duplicate code)
-    async def accessDict(self, interaction: discord.Interaction, user: discord.User, add) -> None:
+    async def accessDict(self, interaction: discord.Interaction, user: discord.Member, add) -> None:
         cur_channel = interaction.channel
         if cur_channel.id not in self.queueDict.keys():
             return await interaction.response.send_message(view=EmbedView(myText="There is no queue in this channel"),ephemeral=True)
@@ -55,7 +55,7 @@ class Queue(commands.Cog):
 
 
     # we ask the admin cog to verify admins for us
-    def verifyAdmin(self, user: discord.User) -> bool:
+    def verifyAdmin(self, user: discord.Member) -> bool:
         return self.adminCog.verifyAdmin(user)
     
     # ADMIN ONLY COMMANDS
@@ -136,7 +136,7 @@ class Queue(commands.Cog):
     
     # add a user to the queue if not full
     @group.command(name="add",description="ADMIN ONLY: Adds the specified User (not already in queue) to the current queue")
-    async def add(self, interaction: discord.Interaction, user: discord.User):
+    async def add(self, interaction: discord.Interaction, user: discord.Member):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
         
@@ -144,7 +144,7 @@ class Queue(commands.Cog):
     
     # kick a user from the queue
     @group.command(name="kick",description="ADMIN ONLY: Kicks the specified User (in the queue) from the current queue")
-    async def remove(self, interaction: discord.Interaction, user: discord.User):
+    async def remove(self, interaction: discord.Interaction, user: discord.Member):
         if not self.verifyAdmin(interaction.user):
             return await interaction.response.send_message(view=EmbedView(myText="This command is reserved for administrators"),ephemeral=True)
 
@@ -206,7 +206,7 @@ class Queue(commands.Cog):
 
         return await interaction.followup.send(view=EmbedView(myText="Start success!"),ephemeral=True)  
     
-    async def pickteam(self, players: list, teams: list, turn: int, prompt: discord.Message, dropdown: discord.Message) -> None:
+    async def pickteam(self, players: list[discord.Member], teams: list[list[discord.Member]], turn: int, prompt: discord.Message, dropdown: discord.Message) -> None:
         if len(players) == 0:
             cur_channel = prompt.channel
             cur_guild = prompt.guild
@@ -244,7 +244,7 @@ class Queue(commands.Cog):
             def __init__(self) -> None:
                 options = []
                 for player in players:
-                    options.append(discord.SelectOption(label=str(player.name),value=str(player.id)))
+                    options.append(discord.SelectOption(label=str(player.nick),value=str(player.id)))
                 super().__init__(placeholder="Choose a player to join your team!",min_values=1,max_values=1,options=options)
             async def callback(self, interaction: discord.Interaction) -> None:
                 if (interaction.user.id != (teams[turn][0]).id):

@@ -11,7 +11,7 @@ class Game(commands.Cog):
         self.bot = bot
         self.adminCog=self.bot.get_cog("Admin")
 
-    def verifyAdmin(self, user: discord.User) -> bool:
+    def verifyAdmin(self, user: discord.Member) -> bool:
         return self.adminCog.verifyAdmin(user)
     
     async def getGame(self, category_id: int):

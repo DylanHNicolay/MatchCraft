@@ -20,7 +20,7 @@ class Admin(commands.Cog):
         for role in adminRoles:
             self.adminWhitelistRole.append(role['role_id']) 
 
-    def verifyAdmin(self, user: discord.User) -> bool:
+    def verifyAdmin(self, user: discord.Member) -> bool:
         for role in user.roles:
             if role.id in self.adminWhitelistRole:
                 return True
