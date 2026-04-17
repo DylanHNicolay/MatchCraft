@@ -189,9 +189,9 @@ class Queue(commands.Cog):
             dm = await player.create_dm()
             await dm.send(content=invite.url)
         
-        record = self.gameCog.getGame(interaction.channel.category.id)
+        record = await self.gameCog.getGame(interaction.channel.category.id)
 
-        if record[0]['team_count'] > 1 and len(players) > 2:
+        if record[0]['team_count'] > 1 and len(players) > 1:
             captain1Turn = True
             team1 = []
             team2 = []
@@ -204,31 +204,58 @@ class Queue(commands.Cog):
             players.remove(captain2)
             team2.append(captain2)
 
-            promptMsg = interaction.channel.send(view=EmbedView(myText=(captain1.mention+", choose someone to join your team!")))
-            dropdownMsg = interaction.channel.send(view=EmbedView(myText="Waiting for dropdown..."))
+            promptMsg = await interaction.channel.send(view=EmbedView(myText=(captain1.mention+", choose someone to join your team!")))
+            dropdownMsg = await interaction.channel.send(view=EmbedView(myText="Waiting for dropdown..."))
             await self.pickteam(players,captain1,captain2,team1,team2,captain1Turn,promptMsg,dropdownMsg)
 
         return await interaction.followup.send(view=EmbedView(myText="Start success!"),ephemeral=True)  
     
     async def pickteam(self, players: list, Cap1: discord.User, Cap2: discord.User, Team1: list, Team2: list, Cap1Turn: bool, prompt: discord.Message, dropdown: discord.Message) -> None:
         if len(players) == 0:
+            cur_channel = prompt.channel
+            cur_guild = prompt.guild
+
             msg = "Team 1:\n"
             for person in Team1:
                 msg += (person.mention+"\n")
             msg += "\nTeam 2:\n"
             for person in Team2:
                 msg += (person.mention+"\n")
-            await prompt.channel.send(view=EmbedView(myText=msg))
+            await cur_channel.send(view=EmbedView(myText=msg))
+
             await prompt.delete()
             await dropdown.delete()
+
+            team1overrides = {}
+            team2overrides = {}
+            team1overrides[cur_guild.default_role] = discord.PermissionOverwrite(view_channel=False)
+            team2overrides[cur_guild.default_role] = discord.PermissionOverwrite(view_channel=False)
+
+            for player in Team1:
+                team1overrides[player] = discord.PermissionOverwrite(
+                    view_channel = True,
+                    speak = True
+                )
+            for player in Team2:
+                team2overrides[player] = discord.PermissionOverwrite(
+                    view_channel = True,
+                    speak = True
+                )
+
+            vc = await cur_guild.create_voice_channel(name="Team 1 VC",overwrites=team1overrides,category=cur_channel.category)
+            self.queueDict[cur_channel.id]["vc"].append(vc)
+            vc = await cur_guild.create_voice_channel(name="Team 2 VC",overwrites=team2overrides,category=cur_channel.category)
+            self.queueDict[cur_channel.id]["vc"].append(vc)
+
             return
         
+        queue = self
+        
         class Dropdown(discord.ui.Select):
-            def __init__(self, Queue: Queue) -> None:
+            def __init__(self) -> None:
                 options = []
-                self.queue = Queue
                 for player in players:
-                    options.append(discord.SelectOption(label=player.nick,value=str(player.id)))
+                    options.append(discord.SelectOption(label=str(player.name),value=str(player.id)))
                 super().__init__(placeholder="Choose a player to join your team!",min_values=1,max_values=1,options=options)
             async def callback(self, interaction: discord.Interaction) -> None:
                 if (Cap1Turn and interaction.user.id != Cap1.id) or (not Cap1Turn and interaction.user.id != Cap2.id):
@@ -238,15 +265,16 @@ class Queue(commands.Cog):
                 Team1.append(member) if Cap1Turn else Team2.append(member)
                 players.remove(member)
 
-                return await self.queue.pickteam(players,Cap1,Cap2,Team1,Team2,not Cap1Turn,prompt,dropdown)
+                await interaction.response.send_message(view=EmbedView(myText="Pick success!"),ephemeral=True)
+                return await queue.pickteam(players,Cap1,Cap2,Team1,Team2,not Cap1Turn,prompt,dropdown)
 
         class DropdownView(discord.ui.View):
-            def __init__(self, queue: Queue) -> None:
-                super().__init__(timeout=None)
-                self.add_item(Dropdown(Queue=queue))
+            def __init__(self) -> None:
+                super().__init__(timeout=180)
+                self.add_item(Dropdown())
         
-        prompt.edit(view=EmbedView(myText=((Cap1 if Cap1Turn else Cap2).mention)+", choose someone to join your team!"))
-        dropdown.edit(view=DropdownView(self))
+        await prompt.edit(view=EmbedView(myText=((Cap1 if Cap1Turn else Cap2).mention)+", choose someone to join your team!"))
+        await dropdown.edit(view=DropdownView())
 
     # Below are commands which anyone can use
 
