@@ -227,7 +227,7 @@ class Queue(commands.Cog):
                     )
                     msg += (person.mention+"\n")
                 msg += "\n"
-            await cur_channel.send(view=EmbedView(myText=msg))
+            self.queueDict[cur_channel.id]["msg_id"] = (await cur_channel.send(view=EmbedView(myText=msg))).id
 
             await prompt.delete()
             await dropdown.delete()

@@ -41,7 +41,7 @@ class Game(commands.Cog):
         except:
             return await interaction.response.send_message(view=EmbedView(myText="Database access failed"),ephemeral=True)
 
-        
+        await interaction.response.defer()
         # Create the channels
         category_override = { # Ensures that the access role can see the category
             interaction.guild.default_role: discord.PermissionOverwrite(
@@ -81,10 +81,10 @@ class Game(commands.Cog):
             await db.execute("INSERT INTO game_configuration (game_name, guild, category, players_per_team, team_count, role_count) VALUES ($1, $2, $3, $4, $5, $6);", game_name, interaction.guild_id, category.id, players_per_team, teams, num_roles if role_based_matchmaking else 1)
             await db.close()
         except:
-            return await interaction.response.send_message(view=EmbedView(myText="Unable to add game to database"),ephemeral=True)
+            return await interaction.followup.send(view=EmbedView(myText="Unable to add game to database"),ephemeral=True)
 
         if not role_based_matchmaking:
-            return await interaction.response.send_message(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
+            return await interaction.followup.send(view=EmbedView(myText="Finished setting up game."),ephemeral=True)
         
         def check_user(m: discord.Message) -> bool:
             return m.author == interaction.user and m.channel == interaction.channel
@@ -92,9 +92,8 @@ class Game(commands.Cog):
         try:
             await db.connect()
         except:
-            return await interaction.response.send_message(view=EmbedView(myText="Couldn't re-connect to DB for role info."),ephemeral=True)
+            return await interaction.followup.send(view=EmbedView(myText="Couldn't re-connect to DB for role info."),ephemeral=True)
 
-        await interaction.response.defer()
         for role_number in range(num_roles + 1):
             await interaction.followup.send(f"Send the name of role {role_number + 1}")
             user_reply = await self.bot.wait_for('message', check=check_user, timeout=30)
